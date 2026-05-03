@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/StreamingPlatform.Api/StreamingPlatform.Api.csproj" />
+    <Project Path="src/StreamingPlatform.Application/StreamingPlatform.Application.csproj" />
+    <Project Path="src/StreamingPlatform.Contracts/StreamingPlatform.Contracts.csproj" />
+    <Project Path="src/StreamingPlatform.Domain/StreamingPlatform.Domain.csproj" />
+    <Project Path="src/StreamingPlatform.Infrastructure/StreamingPlatform.Infrastructure.csproj" />
+  </Folder>
+</Solution>
