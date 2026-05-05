@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: streamline-backend
+    runtime: dotnet
+    runtimeVersion: "10.0"
+    buildCommand: dotnet publish -c Release -o /app
+    startCommand: dotnet StreamingPlatform.Api.dll
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ConnectionStrings__DefaultConnection
+        sync: false
+      - key: Jwt__Key
+        sync: false
+      - key: Jwt__Issuer
+        value: StreamingPlatform
+      - key: Jwt__Audience
+        value: StreamingPlatformUsers
+      - key: Jwt__ExpiryMinutes
+        value: "60"
+    healthCheckPath: /health
