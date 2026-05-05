@@ -1,49 +1,43 @@
 # ── Stage 1: Build ───────────────────────────────────────
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+
 WORKDIR /src
 
-# Copy solution and all .csproj files first (layer cache for restore)
-COPY ["StreamingPlatform.sln", "./"]
-COPY ["src/StreamingPlatform.Api/StreamingPlatform.Api.csproj",                         "src/StreamingPlatform.Api/"]
-COPY ["src/StreamingPlatform.Application/StreamingPlatform.Application.csproj",         "src/StreamingPlatform.Application/"]
-COPY ["src/StreamingPlatform.Domain/StreamingPlatform.Domain.csproj",                   "src/StreamingPlatform.Domain/"]
-COPY ["src/StreamingPlatform.Infrastructure/StreamingPlatform.Infrastructure.csproj",   "src/StreamingPlatform.Infrastructure/"]
-COPY ["src/StreamingPlatform.Contracts/StreamingPlatform.Contracts.csproj",             "src/StreamingPlatform.Contracts/"]
+# Copy project files first (cache restore layer)
+COPY ["src/StreamingPlatform.Api/StreamingPlatform.Api.csproj", "src/StreamingPlatform.Api/"]
+COPY ["src/StreamingPlatform.Application/StreamingPlatform.Application.csproj", "src/StreamingPlatform.Application/"]
+COPY ["src/StreamingPlatform.Domain/StreamingPlatform.Domain.csproj", "src/StreamingPlatform.Domain/"]
+COPY ["src/StreamingPlatform.Infrastructure/StreamingPlatform.Infrastructure.csproj", "src/StreamingPlatform.Infrastructure/"]
+COPY ["src/StreamingPlatform.Contracts/StreamingPlatform.Contracts.csproj", "src/StreamingPlatform.Contracts/"]
 
-# Restore packages (cached unless .csproj changes)
+# Restore dependencies
 RUN dotnet restore "src/StreamingPlatform.Api/StreamingPlatform.Api.csproj"
 
-# Copy the rest of the source
+# Copy everything
 COPY . .
 
-# Build and publish in Release mode
-WORKDIR "/src/src/StreamingPlatform.Api"
-RUN dotnet publish "StreamingPlatform.Api.csproj" \
+# Publish app
+WORKDIR /src/src/StreamingPlatform.Api
+
+RUN dotnet publish \
+    "StreamingPlatform.Api.csproj" \
     -c Release \
     -o /app/publish \
     --no-restore \
     /p:UseAppHost=false
 
+
 # ── Stage 2: Runtime ─────────────────────────────────────
-FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
+
 WORKDIR /app
 
-# Create a non-root user for security
-RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
-
-# Copy published output from build stage
 COPY --from=build /app/publish .
 
-# Create logs directory and set permissions
-RUN mkdir -p /app/logs && chown -R appuser:appgroup /app
-
-USER appuser
-
-# Expose HTTP port (nginx/reverse proxy handles HTTPS)
-EXPOSE 8080
-
-ENV ASPNETCORE_URLS=http://+:8080
+# Render uses port 10000
+ENV ASPNETCORE_URLS=http://+:10000
 ENV ASPNETCORE_ENVIRONMENT=Production
-ENV DOTNET_RUNNING_IN_CONTAINER=true
+
+EXPOSE 10000
 
 ENTRYPOINT ["dotnet", "StreamingPlatform.Api.dll"]
